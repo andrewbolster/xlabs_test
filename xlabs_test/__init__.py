@@ -86,8 +86,8 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
                     ax.set_xlim(0,xlim)
                 if ylim is not None:
                     ax.set_ylim(0,ylim)
-                if invert_y and col < 3:
-                    ax.invert_yaxis()
+            if invert_y and col < 3:
+                ax.invert_yaxis()
 
     pad=5
     for ax, col in zip(axes[0], ['Raw','Processed','Scaled']):
