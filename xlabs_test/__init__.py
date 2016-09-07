@@ -59,14 +59,15 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
     colorlist, scalarmap = unique_cm_dict_from_list(df.index.tolist())
     df['color'] = colorlist
 
-    fig, axes = plt.subplots(nrows = len(split_indexes), ncols=4, figsize= (16,10), gridspec_kw=dict(width_ratios=[3,3,3,1]))
+
+    fig, axes = plt.subplots(nrows = len(split_indexes), ncols=3, figsize= (16,10))
 
     if len(split_indexes)==1:
         axes=[axes]
 
     for i, (lower,upper) in enumerate(split_indexes):
         for j,(x,y) in enumerate(zip(['Xr','Xp', 'Xs'],['Yr','Yp', 'Ys'])):
-            df.loc[lower:upper].plot.scatter(x=x, y=y, c='index', ax=axes[i][j], colorbar=True)
+            df.loc[lower:upper].plot.scatter(x=x, y=y, c='index', ax=axes[i][j], colormap='gist_ncar', colorbar=True)
 
 
     for row, _axes in enumerate(axes):
@@ -101,6 +102,9 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
                         size='large', ha='right', va='center', rotation='vertical')
 
     fig.suptitle(xlabscsv)
+    fig.subplots_adjust(right=0.9)
+    #cbar_ax = fig.add_axes([0.85,0.05,0.8,0.9])
+
     plt.show()
 
 
