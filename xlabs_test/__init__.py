@@ -25,7 +25,7 @@ def build_argparser():
     parser.add_argument("--xslim", action='store', default=1, help="Restrict view to given x limit for the scaled view")
     parser.add_argument("--yslim", action='store', default=1, help="Restrict view to given y limit for the scaled view")
     parser.add_argument("-Y", "--invert_y", action='store_true', default=False, help="Invert y-axis")
-    parser.add_argument("-C", "--confidence_factor", action='store', default=1.0, help='Limit output to given percentage confidence (i.e. 0.8 drops 20%% worst)')
+    parser.add_argument("-C", "--confidence_factor", action='store', default=1.0, type=float, help='Limit output to given percentage confidence (i.e. 0.8 drops 20%% worst)')
 
     return parser
 
