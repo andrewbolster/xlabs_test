@@ -40,7 +40,7 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
     elif calicut.isdigit():
         cuts = [int(calicut)]
     elif ',' in calicut:
-        cuts = map(int, calicut.split(','))
+        cuts = list(map(int, calicut.split(',')))
     else:
         raise NotImplementedError("No idea how to deal with calicuts: {}".format(calicut))
 
