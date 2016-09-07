@@ -63,7 +63,6 @@ def go(xlabscsv, calicut, invert_y=False, xlim=None, ylim=None, xslim=None, ysli
                     ax.set_xlim(0,xlim)
                 if ylim is not None:
                     ax.set_ylim(0,ylim)
-                ax.s
             else:
                 if xslim is not None:
                     ax.set_xlim(0, xslim)
