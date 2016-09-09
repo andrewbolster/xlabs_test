@@ -1,5 +1,6 @@
 
 import argparse
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -27,10 +28,12 @@ def build_argparser():
     parser.add_argument("--yslim", action='store', default=1, help="Restrict view to given y limit for the scaled view")
     parser.add_argument("-Y", "--invert_y", action='store_true', default=False, help="Invert y-axis")
     parser.add_argument("-C", "--confidence_factor", action='store', default=1.0, type=float, help='Limit output to given percentage confidence (i.e. 0.8 drops 20%% worst)')
+    parser.add_argument("-f", "--figure", action='store_true', default=False, help='Don\'t show the figure; dump it to "xlabscsv.png"')
 
     return parser
 
-def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None, yslim=None, confidence_factor=None, **kwargs):
+def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None, yslim=None,
+       confidence_factor=None, figure=False, **kwargs):
     df = pd.read_csv(xlabscsv,
                      names=["Xr", "Yr", "Xp", "Xs", "Yp", "Ys", "C", 3, ],
                      index_col=False)
@@ -59,7 +62,10 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
     cm  = 'gist_ncar'
 
     if confidence_factor is not None:
-        df = df[df.C < df.C.quantile(confidence_factor)]
+        conf_val = df.C.quantile(confidence_factor)
+        df = df[df.C < conf_val]
+    else:
+        conf_val = None
 
 
 
@@ -68,7 +74,10 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
     if len(split_indexes)==1:
         axes=[axes]
 
-    fig.suptitle(xlabscsv)
+    fig.suptitle("{file},-Y={yinv},-C={C}".format(
+        file=xlabscsv, yinv=invert_y, C=(confidence_factor,conf_val)
+        )
+    )
     fig.subplots_adjust(right=0.925)
     cbar_ax = fig.add_axes([0.95,0.05,0.01,0.9])
     scalarmap._A = df.index.values
@@ -89,7 +98,6 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
                 if yslim is not None:
                     ax.set_ylim(0, yslim)
 
-                cmap_base_ax = ax # Keep score axis figure for colourmap generation
             else:
                 if xlim is not None:
                     ax.set_xlim(0,xlim)
@@ -111,12 +119,13 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
                         size='large', ha='right', va='center', rotation=320)
 
 
-    #plt.clim(0, df.index.max())
     scalarmap._A=[]
     plt.colorbar(scalarmap, cax=cbar_ax)
     cbar_ax.invert_yaxis()
-
-    plt.show()
+    if figure:
+        fig.savefig(os.path.join(xlabscsv,'.png'))
+    else:
+        plt.show()
 
 
 
