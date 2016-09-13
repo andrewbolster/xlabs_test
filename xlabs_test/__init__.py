@@ -20,7 +20,7 @@ def unique_cm_dict_from_list(items, basecmap = 'gist_rainbow'):
 
 def build_argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("xlabscsv", help="XLabs Output CSV for Visualisation")
+    parser.add_argument("xlabscsv", help="XLabs Output CSV for Visualisation", nargs='+')
     parser.add_argument("-c", "--calicut", action='store', default=None, type=str, help="Estimated index of the end of Calibration, can be list of x,y,z...")
     parser.add_argument("-x", "--xlim", action='store', default=1920, help="Restrict view to given x limit")
     parser.add_argument("-y", "--ylim", action='store', default=1080, help="Restrict view to given y limit")
@@ -34,9 +34,17 @@ def build_argparser():
 
 def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None, yslim=None,
        confidence_factor=None, figure=False, **kwargs):
-    df = pd.read_csv(xlabscsv,
-                     names=["Xr", "Yr", "Xp", "Xs", "Yp", "Ys", "C", 3, ],
-                     index_col=False)
+    if isinstance(xlabscsv, list):
+        df = pd.concat([
+                           pd.read_csv(xlabs,
+                                       names=["Xr", "Yr", "Xp", "Xs", "Yp", "Ys", "C", 3, ],
+                                       index_col=False)
+                           for xlabs in xlabscsv
+                           ])
+    else:
+        df = pd.read_csv(xlabscsv,
+                         names=["Xr", "Yr", "Xp", "Xs", "Yp", "Ys", "C", 3, ],
+                         index_col=False)
     df.reset_index(inplace=True)
 
     if calicut is None:
@@ -49,7 +57,7 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
         raise NotImplementedError("No idea how to deal with calicuts: {}".format(calicut))
 
     # Goes from [x,y,z] to [(0,x-1),(x,y-1),(y,z-1),(z,N)]
-    split_indexes = list(map(lambda a: (a.min(),a.max()),np.array_split(df.index, cuts)))
+    split_indexes = list(map(lambda a: (a.min(),a.max()),np.array_split(df['index'], cuts)))
     try:
         split_indexes.remove((np.nan, np.nan))
     except ValueError:
@@ -57,9 +65,7 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
     except:
         raise
 
-    colorlist, scalarmap = unique_cm_dict_from_list(df.index.tolist())
-    df['color'] = colorlist
-    cm  = 'gist_ncar'
+    colorlist, scalarmap = unique_cm_dict_from_list(df['index'].unique().tolist())
 
     if confidence_factor is not None:
         conf_val = df.C.quantile(confidence_factor)
@@ -80,12 +86,12 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
     )
     fig.subplots_adjust(right=0.925)
     cbar_ax = fig.add_axes([0.95,0.05,0.01,0.9])
-    scalarmap._A = df.index.values
+    scalarmap._A = df['index'].values
 
     for i, (lower,upper) in enumerate(split_indexes):
         for j,(x,y) in enumerate(zip(['Xr','Xp', 'Xs'],['Yr','Yp', 'Ys'])):
             _df=df.loc[lower:upper]
-            _df.plot.scatter(x=x, y=y, c=[scalarmap.to_rgba(c) for c in _df.index.values], ax=axes[i][j])
+            _df.plot.scatter(x=x, y=y, c=[scalarmap.to_rgba(c) for c in _df['index'].values], ax=axes[i][j])
 
 
     for row, _axes in enumerate(axes):
