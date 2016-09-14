@@ -18,6 +18,15 @@ def unique_cm_dict_from_list(items, basecmap = 'gist_rainbow'):
     scalarmap = mpl.cm.ScalarMappable(norm=cnorm, cmap=cm)
     return dict(zip(items, [scalarmap.to_rgba(i) for i in range(len(items))])), scalarmap
 
+def int_or_float(val:str):
+    if val.isdigit():
+        return int(val)
+    else:
+        try:
+            return float(val)
+        except ValueError:
+            raise
+
 def build_argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument("xlabscsv", help="XLabs Output CSV for Visualisation", nargs='+')
@@ -27,7 +36,7 @@ def build_argparser():
     parser.add_argument("--xslim", action='store', default=1, help="Restrict view to given x limit for the scaled view")
     parser.add_argument("--yslim", action='store', default=1, help="Restrict view to given y limit for the scaled view")
     parser.add_argument("-Y", "--invert_y", action='store_true', default=False, help="Invert y-axis")
-    parser.add_argument("-C", "--confidence_factor", action='store', default=1.0, type=float, help='Limit output to given percentage confidence (i.e. 0.8 drops 20%% worst)')
+    parser.add_argument("-C", "--confidence_factor", action='store', default=1.0, type=int_or_float, help='Limit output to given percentage confidence (i.e. 0.8 drops 20%% worst) or hard limit (8 cuts all confidences less than 8)')
     parser.add_argument("-f", "--figure", action='store_true', default=False, help='Don\'t show the figure; dump it to "xlabscsv.png"')
 
     return parser
@@ -68,7 +77,15 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
     colorlist, scalarmap = unique_cm_dict_from_list(df['index'].unique().tolist())
 
     if confidence_factor is not None:
-        conf_val = df.C.quantile(confidence_factor)
+        if isinstance(confidence_factor, int):
+            conf_val = confidence_factor
+        elif isinstance(confidence_factor, float):
+            conf_val = df.C.quantile(confidence_factor)
+        else:
+            raise ValueError("Unsure how to handle confidence factor: {}/{}".format(
+                confidence_factor,
+                type(confidence_factor)
+            ))
         df = df[df.C < conf_val]
     else:
         conf_val = None
@@ -81,7 +98,7 @@ def go(xlabscsv, calicut=None, invert_y=False, xlim=None, ylim=None, xslim=None,
         axes=[axes]
 
     fig.suptitle("{file},-Y={yinv},-C={C}".format(
-        file=xlabscsv, yinv=invert_y, C=(confidence_factor,conf_val)
+        file=xlabscsv, yinv=invert_y, C=(confidence_factor,conf_val) if confidence_factor!= conf_val else confidence_factor
         )
     )
     fig.subplots_adjust(right=0.925)
